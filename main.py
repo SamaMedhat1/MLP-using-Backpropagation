@@ -255,7 +255,11 @@ def initialize_Model_Dfs():
             else:
                 weights.append(np.random.rand(neurons[layerNum], neurons[layerNum - 1]))
 
-    print(weights)
+    delta = [[] for layerNum in range(hidden_num + 1)]
+    layers_output = [[] for layerNum in range(hidden_num + 1)]
+    print(delta)
+
+
 # main
 data_preprocessing()
 gui()
