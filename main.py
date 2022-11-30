@@ -24,6 +24,14 @@ use_bias = True
 activation_fun = ''
 hidden_num = ''
 neurons = []
+encodes = {'Adelie': [0, 0, 1], 'Gentoo': [0, 1, 0], 'Chinstrap': [1, 0, 0]}
+train_labels = []
+test_labels = []
+train_data = []
+test_data = []
+weights = []
+delta = []
+layers_output = []
 
 
 # call back when press the run button
@@ -127,5 +135,128 @@ def create_label():
     epoch_label.place(x=250, y=220)
 
 
+def data_preprocessing():
+    global train_data, test_data, train_labels, test_labels
+
+    dataSet = pd.read_csv('penguins.csv')
+
+    # find important columns name which contain  numeric values
+    numbers_cols = dataSet.select_dtypes(include=np.number).columns.to_list()
+
+    # find important columns name which contain nun numeric values & convert it's type to string
+    non_integer_cols = dataSet.select_dtypes(include=['object']).columns.to_list()
+    dataSet[non_integer_cols] = dataSet[non_integer_cols].astype('string')
+
+    # split dataSet based on specie
+    adelie = dataSet.iloc[0:50, :]
+    gentoo = dataSet.iloc[50: 100, :]
+    chinstrap = dataSet.iloc[100: 150, :]
+
+    nan_val_in_Adelie = {}
+    nan_val_in_Gentoo = {}
+    nan_val_in_Chinstrap = {}
+
+    # find values for 'nan' with median in integer cols & with most repeated value in 'gender' col.
+    # for integer col
+    for col in numbers_cols:
+        nan_val_in_Adelie[col] = adelie[col].median()
+        nan_val_in_Gentoo[col] = gentoo[col].median()
+        nan_val_in_Chinstrap[col] = chinstrap[col].median()
+
+    # for gender
+    nan_val_in_Adelie['gender'] = adelie['gender'].mode()[0]
+    nan_val_in_Gentoo['gender'] = gentoo['gender'].mode()[0]
+    nan_val_in_Chinstrap['gender'] = chinstrap['gender'].mode()[0]
+
+    # replace nan
+    # in adelie
+    adelie = adelie.fillna(value=nan_val_in_Adelie)
+    # in gentoo
+    gentoo = gentoo.fillna(value=nan_val_in_Gentoo)
+    # in Chinstrap
+    chinstrap = chinstrap.fillna(value=nan_val_in_Chinstrap)
+
+    # Encoding gender column
+    genders = ['male', 'female']
+    label_encoder = preprocessing.LabelEncoder()
+    label_encoder.fit(genders)
+    adelie[adelie.columns[4]] = label_encoder.transform(adelie['gender'])
+    gentoo[gentoo.columns[4]] = label_encoder.transform(gentoo['gender'])
+    chinstrap[chinstrap.columns[4]] = label_encoder.transform(chinstrap['gender'])
+
+    # dataSet shuffling
+    adelie = adelie.sample(frac=1).reset_index(drop=True)
+    gentoo = gentoo.sample(frac=1).reset_index(drop=True)
+    chinstrap = chinstrap.sample(frac=1).reset_index(drop=True)
+
+    # split dataSet into train dataSet and test dataSet
+    Adelie_train = adelie.iloc[:30, :]
+    Adelie_test = adelie.iloc[30:, :].reset_index(drop=True)
+    Gentoo_train = gentoo.iloc[:30, :]
+    Gentoo_test = gentoo.iloc[30:, :].reset_index(drop=True)
+    Chinstrap_train = chinstrap.iloc[:30, :]
+    Chinstrap_test = chinstrap.iloc[30:, :].reset_index(drop=True)
+
+    # concatenate the data set
+    train_frames = [Adelie_train, Gentoo_train, Chinstrap_train]
+    test_frames = [Adelie_test, Gentoo_test, Chinstrap_test]
+
+    train_data = pd.concat(train_frames).reset_index(drop=True)
+    test_data = pd.concat(test_frames).reset_index(drop=True)
+
+    # data shuffling
+    train_data = train_data.sample(frac=1).reset_index(drop=True)
+    test_data = test_data.sample(frac=1).reset_index(drop=True)
+
+    # create labels list after encode species column
+    train_labels_list = []
+    test_labels_list = []
+
+    for idx in range(len(train_data)):
+        specie = train_data.iloc[idx, 0]
+        train_labels_list.append(encodes[specie])
+
+    for idx in range(len(test_data)):
+        specie = test_data.iloc[idx, 0]
+        test_labels_list.append(encodes[specie])
+
+    # create train_labels & test_labels dataframes
+    train_labels = pd.DataFrame(data={'species': train_labels_list})
+    test_labels = pd.DataFrame(data={'species': test_labels_list})
+
+    # remove labels from X data
+    train_data.pop('species')
+    test_data.pop('species')
+
+    # normalize training data
+    train_data = preprocessing.normalize(train_data)
+
+
+def initialize_Model_Dfs():
+    user_inputs()
+    global weights, layers_output,delta
+    # weight & bias
+    if use_bias:
+        for layerNum in range(hidden_num + 1):
+            if layerNum == 0:
+                weights.append(np.random.rand(neurons[layerNum], 6))
+            elif layerNum == hidden_num:
+                weights.append(np.random.rand(3, (neurons[layerNum-1] + 1)))
+            else:
+                weights.append(np.random.rand(neurons[layerNum],
+                                              (neurons[layerNum - 1] + 1)))
+
+    else:
+        for layerNum in range(hidden_num + 1):
+            if layerNum == 0:
+                weights.append(np.random.rand(neurons[layerNum], 5))
+            elif layerNum == hidden_num:
+                weights.append(np.random.rand(3, neurons[layerNum - 1]))
+            else:
+                weights.append(np.random.rand(neurons[layerNum], neurons[layerNum - 1]))
+
+    print(weights)
 # main
+data_preprocessing()
 gui()
+initialize_Model_Dfs()
