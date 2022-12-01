@@ -21,6 +21,7 @@ text2 = StringVar()
 lR = ''
 epoch_num = ''
 use_bias = True
+bias = 1
 activation_fun = ''
 hidden_num = ''
 neurons = []
@@ -36,13 +37,19 @@ layers_output = []
 
 # call back when press the run button
 def run():
-    user_inputs()
+    data_preprocessing()
+    initialize_Model_Dfs()
     # print(lR)
     # print(epoch_num)
     # print(use_bias)
     # print(activation_fun)
     # print(hidden_num)
     # print(neurons)
+    # print("w",weights)
+    # print("delta",delta)
+    # print("output",layers_output)
+    # print("label",train_labels)
+    model()
 
 
 # take user values
@@ -63,6 +70,53 @@ def user_inputs():
         activation_fun = "Sigmoid"
     elif radio_var2.get() == 2:
         activation_fun = "Tangent"
+
+
+def sigmoid(x):
+    return 1.0 / (1.0 + np.exp(-x))
+
+
+def apply_activation_fun(net_list, hidden_layer):
+    output = []
+    if activation_fun == "Sigmoid":
+        for net in net_list:
+            z = sigmoid(net)
+            output.append(z)
+    else:
+        for net in net_list:
+            z = np.tanh(net)
+            output.append(z)
+    if use_bias and hidden_layer != hidden_num:
+       output.append(bias)
+    return output
+
+
+def forward_prop(row):
+    net = []
+    for layer_num in range(hidden_num+1):
+        transpose_weight = weights[layer_num].transpose()
+        if layer_num == 0:
+            net = np.dot(row, transpose_weight)
+        else:
+            net = np.dot(layers_output[layer_num - 1], transpose_weight)
+        layers_output[layer_num] = apply_activation_fun(net, layer_num)
+
+
+def model():
+    global epoch_num, train_data, neurons, bias, train_labels
+    neurons.append(3)
+    #labels = train_labels.to_numpy()
+    while epoch_num:
+        row_num = 0
+        for row in train_data:
+            if use_bias:
+               row = np.append(row, bias)
+            forward_prop(row)
+            #backward_prop(labels[row_num])
+            row_num += 1
+        epoch_num -= 1
+    print(layers_output)
+    print(delta)
 
 
 # call all function that create elements in Gui
@@ -260,6 +314,8 @@ def initialize_Model_Dfs():
 
 
 # main
-data_preprocessing()
 gui()
+
+
+
 
