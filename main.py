@@ -21,6 +21,7 @@ text2 = StringVar()
 lR = ''
 epoch_num = ''
 use_bias = True
+bias = 1
 activation_fun = ''
 hidden_num = ''
 neurons = []
@@ -36,7 +37,14 @@ layers_output = []
 
 # call back when press the run button
 def run():
-    user_inputs()
+    data_preprocessing()
+    initialize_Model_Dfs()
+    print(weights)
+    print(delta)
+    # print(layers_output)
+    # print(train_labels)
+    # print(train_data)
+    model()
     # print(lR)
     # print(epoch_num)
     # print(use_bias)
@@ -63,6 +71,68 @@ def user_inputs():
         activation_fun = "Sigmoid"
     elif radio_var2.get() == 2:
         activation_fun = "Tangent"
+
+
+def sigmoid(x):
+    return 1.0 / (1.0 + np.exp(-x))
+
+
+def forward_prop(row):
+    global bias, layers_output, hidden_num, neurons
+    z = 0
+    net = 0
+    for layer_num in range(hidden_num+1):
+        output = []
+        for neuron_num in range(neurons[layer_num]):
+            transpose_weight = weights[layer_num][neuron_num].transpose()
+            if layer_num == 0:
+                net = np.dot(row, transpose_weight)
+            else:
+                net = np.dot(layers_output[layer_num - 1], transpose_weight)
+            if activation_fun == "Sigmoid":
+               z = sigmoid(net)
+            else:
+               z = np.tanh(net)
+            output.append(z)
+        if use_bias and layer_num != hidden_num:
+           output.append(bias)
+        layers_output[layer_num] = output
+
+
+# def backward_prop(row):
+#     global hidden_num, delta
+#     layer_num = hidden_num
+#     delta_value = 0
+#     while layer_num:
+#          delta_row = []
+#          for neuron_num in range(neurons[layer_num]):
+#              z = layers_output[layer_num][neuron_num]
+#              if layer_num == hidden_num:
+#                 delta_value = (1-z) * z * (1 - z)
+#              else:
+#                  transpose_weight = weights[layer_num+1][neuron_num].transpose()
+#                  product = np.dot(delta[layer_num], transpose_weight)
+#                  delta_value = product * z * (1 - z)
+#              delta_row.append(delta_value)
+#          delta[layer_num-1] = delta_row
+#          print(delta)
+#          layer_num -= 1
+
+
+
+def model():
+    global epoch_num, train_data, neurons
+    neurons.append(3)
+    while epoch_num:
+        for row in train_data:
+            if use_bias:
+               row = np.append(row, bias)
+            forward_prop(row)
+            backward_prop(row)
+        epoch_num -= 1
+    print(layers_output)
+    print(delta)
+
 
 
 # call all function that create elements in Gui
@@ -255,11 +325,10 @@ def initialize_Model_Dfs():
             else:
                 weights.append(np.random.rand(neurons[layerNum], neurons[layerNum - 1]))
 
-    delta = [[] for layerNum in range(hidden_num + 1)]
+    delta = [[] for layerNum in range(hidden_num)]
     layers_output = [[] for layerNum in range(hidden_num + 1)]
 
 
 # main
-data_preprocessing()
 gui()
 
