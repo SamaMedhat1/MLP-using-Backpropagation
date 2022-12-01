@@ -316,6 +316,51 @@ def initialize_Model_Dfs():
 # main
 gui()
 
+<<<<<<< Updated upstream
 
 
 
+=======
+def test():
+   # global test_labels, test_data, weights
+    testData = test_data.to_numpy()
+    test_label = test_labels
+    score = 0
+    confusionMatrix = {'Class1T': 0, 'Class1F': 0, 'Class2T': 0, 'Class2F': 0,'Class3T': 0, 'Class3F': 0}
+
+    for row in testData:
+        forward_prop(row)
+        # get max index of output layer
+        max_index = np.argmax(layers_output[hidden_num])
+        # set the max value in output layer with 1
+        layers_output[hidden_num[max_index]] = 1
+        # set the other values with 0
+        for i in range(layers_output[hidden_num]+1):
+            if i != max_index:
+                layers_output[hidden_num[i]] = 0
+        # find the index of actual value
+        for z in range(test_label + 1):
+            if test_label[z] == 1:
+                actual_index = z
+        #res = test_label[row_num]-layers_output[hidden_num[max_index]]
+
+        if layers_output[hidden_num] == test_label:
+            score = score + 1
+            if actual_index == 0:
+                confusionMatrix['Class1T'] += 1
+            elif actual_index == 1:
+                confusionMatrix['Class2T'] += 1
+            else:
+                confusionMatrix['Class3T'] += 1
+        else:
+            if actual_index == 0:
+                confusionMatrix['Class1F'] += 1
+            elif actual_index == 1:
+                confusionMatrix['Class2F'] += 1
+            else:
+                confusionMatrix['Class3F'] += 1
+    # get the accuracy
+    accuracy = (score / 60.0) * 100
+    print("accuracy:", accuracy, "and the score: ", score)
+    print("confusion Matrix : ", confusionMatrix)
+>>>>>>> Stashed changes
