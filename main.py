@@ -21,7 +21,6 @@ text2 = StringVar()
 lR = ''
 epoch_num = ''
 use_bias = True
-bias = 1
 activation_fun = ''
 hidden_num = ''
 neurons = []
@@ -33,7 +32,7 @@ test_data = []
 weights = []
 delta = []
 layers_output = []
-
+bias = []
 
 # call back when press the run button
 def run():
@@ -50,6 +49,7 @@ def run():
     # print("output",layers_output)
     # print("label",train_labels)
     model()
+    test()
 
 
 # take user values
@@ -86,8 +86,7 @@ def apply_activation_fun(net_list, hidden_layer):
         for net in net_list:
             z = np.tanh(net)
             output.append(z)
-    if use_bias and hidden_layer != hidden_num:
-       output.append(bias)
+    output = np.asarray(output)
     return output
 
 
@@ -99,24 +98,78 @@ def forward_prop(row):
             net = np.dot(row, transpose_weight)
         else:
             net = np.dot(layers_output[layer_num - 1], transpose_weight)
+        net = net.reshape(1,neurons[layer_num])
+        if use_bias:
+            net += bias[layer_num]
         layers_output[layer_num] = apply_activation_fun(net, layer_num)
+
+
+def backward_prop(label):
+    layer_num = hidden_num
+    delta_layer = []
+    while layer_num >= 0:
+        y = layers_output[layer_num]
+        sub = (1.0 - y)
+        if layer_num == hidden_num:
+           delta_layer = (label[0] - y) * y * sub
+        else:
+            current_delta = delta[layer_num+1]
+            current_weight = weights[layer_num+1]
+            sum_of_mult = np.dot(current_delta, current_weight)
+            delta_layer =sum_of_mult * y * sub
+
+        delta[layer_num] = delta_layer
+        layer_num -= 1
+
+
+def update_weight(row):
+    row = np.asarray(row).reshape(1, 5)
+    for layer_num in range(hidden_num+1):
+        transpose_weight = weights[layer_num].transpose()
+        delta_transpose = delta[layer_num].transpose()
+        if layer_num == 0:
+            input_value = row.repeat(repeats=neurons[layer_num], axis=0)
+        else:
+            input_value = layers_output[layer_num-1]
+            input_value = input_value.repeat(repeats=neurons[layer_num], axis=0)
+
+        change_of_weight = lR * input_value * delta_transpose
+        weights[layer_num] = weights[layer_num] + change_of_weight
+
+
+def correct_output(label):
+    target_class = find_label_pos(label)
+    predict_class = find_label_pos(layers_output[-1])
+    return target_class == predict_class
 
 
 def model():
     global epoch_num, train_data, neurons, bias, train_labels
     neurons.append(3)
-    #labels = train_labels.to_numpy()
-    while epoch_num:
+    labels = train_labels.to_numpy()
+    for epoch in range(1, epoch_num+1):
         row_num = 0
+        score = 0
         for row in train_data:
-            if use_bias:
-               row = np.append(row, bias)
             forward_prop(row)
-            #backward_prop(labels[row_num])
+            backward_prop(labels[row_num])
+            update_weight(row)
+            if correct_output(labels[row_num]):
+                score += 1
             row_num += 1
-        epoch_num -= 1
-    print(layers_output)
-    print(delta)
+    print("Training Accuracy at epoch  :", (score / 90.0) * 100)
+
+
+def find_label_pos(arr):
+    idx = 0
+    max_value = -1
+    arr = arr[0]
+    for element in arr:
+        if element > max_value:
+            max_value = element
+            max_idx = idx
+        idx +=1
+    return max_idx
 
 
 # call all function that create elements in Gui
@@ -151,7 +204,7 @@ def create_spinbox():
     spin1 = Spinbox(form, from_=0, to=1, increment=0.1, width=5, textvariable=spinData1)
     spin1.place(x=120, y=220)
 
-    spin2 = Spinbox(form, from_=1, to=5000, width=5, textvariable=spinData2)
+    spin2 = Spinbox(form, from_=1, to=50000, width=5, textvariable=spinData2)
     spin2.place(x=350, y=220)
 
 
@@ -288,79 +341,67 @@ def data_preprocessing():
 
 def initialize_Model_Dfs():
     user_inputs()
-    global weights, layers_output,delta
+    global weights, layers_output, delta, bias
     # weight & bias
-    if use_bias:
-        for layerNum in range(hidden_num + 1):
-            if layerNum == 0:
-                weights.append(np.random.rand(neurons[layerNum], 6))
-            elif layerNum == hidden_num:
-                weights.append(np.random.rand(3, (neurons[layerNum-1] + 1)))
-            else:
-                weights.append(np.random.rand(neurons[layerNum],
-                                              (neurons[layerNum - 1] + 1)))
+    for layerNum in range(hidden_num + 1):
+        if layerNum == 0:
+            weights.append(np.random.rand(neurons[layerNum], 5))
+        elif layerNum == hidden_num:
+            weights.append(np.random.rand(3, neurons[layerNum - 1]))
+        else:
+            weights.append(np.random.rand(neurons[layerNum], neurons[layerNum - 1]))
 
-    else:
-        for layerNum in range(hidden_num + 1):
-            if layerNum == 0:
-                weights.append(np.random.rand(neurons[layerNum], 5))
-            elif layerNum == hidden_num:
-                weights.append(np.random.rand(3, neurons[layerNum - 1]))
+        if use_bias:
+            if layerNum < hidden_num:
+                bias.append(np.random.rand(1, neurons[layerNum]))
             else:
-                weights.append(np.random.rand(neurons[layerNum], neurons[layerNum - 1]))
+                bias.append(np.random.rand(1, 3))
 
     delta = [[] for layerNum in range(hidden_num + 1)]
     layers_output = [[] for layerNum in range(hidden_num + 1)]
 
 
-# main
-gui()
-
-<<<<<<< Updated upstream
-
-
-
-=======
 def test():
-   # global test_labels, test_data, weights
-    testData = test_data.to_numpy()
-    test_label = test_labels
-    score = 0
-    confusionMatrix = {'Class1T': 0, 'Class1F': 0, 'Class2T': 0, 'Class2F': 0,'Class3T': 0, 'Class3F': 0}
 
+    global test_labels, test_data, weights
+    testData = test_data.to_numpy()
+    test_label = test_labels.to_numpy()
+    score = 0
+    confusionMatrix = {'11': 0, '12': 0, '13': 0, '21': 0, '22': 0, '23': 0, '31': 0, '32': 0, '33': 0}
+    row_num = 0
     for row in testData:
         forward_prop(row)
         # get max index of output layer
-        max_index = np.argmax(layers_output[hidden_num])
-        # set the max value in output layer with 1
-        layers_output[hidden_num[max_index]] = 1
-        # set the other values with 0
-        for i in range(layers_output[hidden_num]+1):
-            if i != max_index:
-                layers_output[hidden_num[i]] = 0
-        # find the index of actual value
-        for z in range(test_label + 1):
-            if test_label[z] == 1:
-                actual_index = z
-        #res = test_label[row_num]-layers_output[hidden_num[max_index]]
+        max_index = find_label_pos(layers_output[-1])
 
-        if layers_output[hidden_num] == test_label:
+        # set the max value in output layer with 1
+        layers_output[-1][0][max_index] = 1
+
+        # set the other values with 0
+        for i in range(3):
+            if i != max_index:
+                layers_output[-1][0][i] = 0
+
+        # find the index of actual value
+        actual_index = find_label_pos(test_label[row_num])
+
+        row_num += 1
+
+        if max_index == actual_index:
             score = score + 1
-            if actual_index == 0:
-                confusionMatrix['Class1T'] += 1
-            elif actual_index == 1:
-                confusionMatrix['Class2T'] += 1
-            else:
-                confusionMatrix['Class3T'] += 1
+            label = str(actual_index + 1) + str(actual_index + 1)
+            confusionMatrix[label] += 1
         else:
-            if actual_index == 0:
-                confusionMatrix['Class1F'] += 1
-            elif actual_index == 1:
-                confusionMatrix['Class2F'] += 1
-            else:
-                confusionMatrix['Class3F'] += 1
+            label = str(actual_index + 1) + str(max_index + 1)
+            confusionMatrix[label] += 1
+
     # get the accuracy
     accuracy = (score / 60.0) * 100
     print("accuracy:", accuracy, "and the score: ", score)
     print("confusion Matrix : ", confusionMatrix)
->>>>>>> Stashed changes
+
+
+
+# main
+gui()
+
