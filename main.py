@@ -398,7 +398,7 @@ def test():
 
     # get the accuracy
     accuracy = (score / 60.0) * 100
-    print("accuracy:", accuracy, "and the score: ", score)
+    print("test accuracy:", accuracy, "and the score: ", score)
     print("confusion Matrix : ", confusionMatrix)
 
 
