@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 from matplotlib import pyplot as plt, pyplot
+from tqdm import tqdm
 from tkinter import *
 from tkinter.ttk import *
 
@@ -148,7 +149,7 @@ def model():
     global epoch_num, train_data, neurons, bias, train_labels
     neurons.append(3)
     labels = train_labels.to_numpy()
-    for epoch in range(1, epoch_num+1):
+    for epoch in tqdm(range(1, epoch_num+1)):
         row_num = 0
         score = 0
         for row in train_data:
