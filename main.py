@@ -50,6 +50,7 @@ def run():
     # print("label",train_labels)
     model()
     test()
+    testSample([50.9, 19.1, 196, 1, 3400])
 
 
 # take user values
@@ -230,7 +231,7 @@ def create_label():
     hidden_layer_label.place(x=20, y=30)
 
     num_of_neurons_label = Label(form, textvariable=label2)
-    label2.set("Enter number of neurons'make space between each number'")
+    label2.set("Enter number of neurons 'make space between each number'")
     num_of_neurons_label.place(x=20, y=120)
 
     lr_label = Label(form, textvariable=label3)
@@ -401,6 +402,11 @@ def test():
     print("confusion Matrix : ", confusionMatrix)
 
 
+def testSample(sample):
+    sample = np.array(sample)
+    forward_prop(sample)
+    max_index = find_label_pos(layers_output[-1])
+    print("ClassId : ", max_index + 1)
 
 # main
 gui()
