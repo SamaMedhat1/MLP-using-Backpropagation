@@ -39,16 +39,6 @@ bias = []
 def run():
     data_preprocessing()
     initialize_Model_Dfs()
-    # print(lR)
-    # print(epoch_num)
-    # print(use_bias)
-    # print(activation_fun)
-    # print(hidden_num)
-    # print(neurons)
-    # print("w",weights)
-    # print("delta",delta)
-    # print("output",layers_output)
-    # print("label",train_labels)
     model()
     test()
     testSample([50.9, 19.1, 196, 1, 3400])
@@ -127,7 +117,6 @@ def backward_prop(label):
 def update_weight(row):
     row = np.asarray(row).reshape(1, 5)
     for layer_num in range(hidden_num+1):
-        transpose_weight = weights[layer_num].transpose()
         delta_transpose = delta[layer_num].transpose()
         if layer_num == 0:
             input_value = row.repeat(repeats=neurons[layer_num], axis=0)
@@ -136,6 +125,10 @@ def update_weight(row):
             input_value = input_value.repeat(repeats=neurons[layer_num], axis=0)
 
         change_of_weight = lR * input_value * delta_transpose
+
+        if use_bias:
+           bias[layer_num] = bias[layer_num] +  change_of_weight
+
         weights[layer_num] = weights[layer_num] + change_of_weight
 
 
@@ -246,7 +239,6 @@ def create_label():
 
 def data_preprocessing():
     global train_data, test_data, train_labels, test_labels
-
     dataSet = pd.read_csv('penguins.csv')
 
     # find important columns name which contain  numeric values
@@ -260,7 +252,6 @@ def data_preprocessing():
     adelie = dataSet.iloc[0:50, :]
     gentoo = dataSet.iloc[50: 100, :]
     chinstrap = dataSet.iloc[100: 150, :]
-
     nan_val_in_Adelie = {}
     nan_val_in_Gentoo = {}
     nan_val_in_Chinstrap = {}
@@ -339,7 +330,6 @@ def data_preprocessing():
 
     # normalize training data
     train_data = preprocessing.normalize(train_data)
-
 
 def initialize_Model_Dfs():
     user_inputs()
