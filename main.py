@@ -91,7 +91,7 @@ def forward_prop(row):
             net = np.dot(row, transpose_weight)
         else:
             net = np.dot(layers_output[layer_num - 1], transpose_weight)
-        net = net.reshape(1,neurons[layer_num])
+        net = net.reshape(1, neurons[layer_num])
         if use_bias:
             net += bias[layer_num]
         layers_output[layer_num] = apply_activation_fun(net, layer_num)
@@ -126,11 +126,11 @@ def update_weight(row):
             input_value = input_value.repeat(repeats=neurons[layer_num], axis=0)
 
         change_of_weight = lR * input_value * delta_transpose
+        weights[layer_num] = weights[layer_num] + change_of_weight
 
         if use_bias:
-           bias[layer_num] = bias[layer_num] +  change_of_weight
-
-        weights[layer_num] = weights[layer_num] + change_of_weight
+            change_of_bias = lR * delta[layer_num]
+            bias[layer_num] = bias[layer_num] + change_of_bias
 
 
 def correct_output(label):
