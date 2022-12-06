@@ -35,6 +35,7 @@ delta = []
 layers_output = []
 bias = []
 
+
 # call back when press the run button
 def run():
     data_preprocessing()
